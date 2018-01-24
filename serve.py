@@ -21,7 +21,7 @@ def updateDB():
     print("*" * 100, "Updating")
     print(redis_db.keys())
     # TODO: Empty the DB here
-    dl = Downloader(redis_db=redis_db)
+    dl = Downloader(out_dir="data", redis_db=redis_db)
     if dl.GetData():
         dl.StoreData()
     else:

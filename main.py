@@ -5,21 +5,24 @@ import csv
 from zipfile import ZipFile
 import datetime
 import redis
+from os.path import join
 
 
 class Downloader:
 
-    def __init__(self, redis_db=None):
+    def __init__(self, out_dir, redis_db=None):
         self.todays_date = datetime.date.today()
-        self.fileToBeDownloaded = "EQ" + \
-            self.todays_date.strftime('%d%m%y') + "_CSV.ZIP"
-        # self.fileToBeDownloaded = "EQ220118_CSV.ZIP"
-        self.csvFileName = self.fileToBeDownloaded.split('_')[0] + ".CSV"
+        self.out_dir = out_dir
+        # self.fileToBeDownloaded = "EQ" + \
+        #     self.todays_date.strftime('%d%m%y') + "_CSV.ZIP"
+        self.fileToBeDownloaded = "EQ220118_CSV.ZIP"
+        self.fileToExtract = self.fileToBeDownloaded.split('_')[0] + ".CSV"
+        self.csvFile = join(self.out_dir, self.fileToExtract)
         self.redis_db = redis_db
 
     def StoreData(self):
         if self.redis_db is not None:
-            with open(self.csvFileName) as f:
+            with open(self.csvFile) as f:
                 reader = csv.DictReader(f)
 
                 for row in reader:
@@ -39,9 +42,9 @@ class Downloader:
         if r.status_code == requests.codes.ok:
             print("Creating zip file: ", self.fileToBeDownloaded)
 
-            with open(self.fileToBeDownloaded, 'wb+') as f:
+            with open(join(self.out_dir, self.fileToBeDownloaded), 'wb+') as f:
                 f.write(r.content)
-                ZipFile(f).extract(self.csvFileName)
+                ZipFile(f).extract(self.fileToExtract, self.out_dir)
             return True
             # if zipfile.is_zipfile(self.fileToBeDownloaded):
             #     print("Extracting file:", self.fileToBeDownloaded)
@@ -58,7 +61,7 @@ class Downloader:
             return False
 
 if __name__ == "__main__":
-    d = Downloader(redis_db=redis.StrictRedis())
+    d = Downloader(out_dir="data", redis_db=redis.StrictRedis())
     if d.GetData():
         d.StoreData()
         print("Fetched data successfully")
