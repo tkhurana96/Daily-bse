@@ -9,6 +9,7 @@ requests = "*"
 cherrypy = "*"
 redis = "*"
 apscheduler = "*"
+"jinja2" = "*"
 
 
 [dev-packages]
