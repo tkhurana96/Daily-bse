@@ -5,36 +5,42 @@ import csv
 from zipfile import ZipFile
 import datetime
 import redis
-from os.path import join
+from os.path import join, exists
+from os import mkdir
 
 
 class Downloader:
 
     def __init__(self, out_dir, redis_db=None):
-        self.todays_date = datetime.date.today()
+        self.date = datetime.date.today()
         self.out_dir = out_dir
-        # self.fileToBeDownloaded = "EQ" + \
-        #     self.todays_date.strftime('%d%m%y') + "_CSV.ZIP"
-        self.fileToBeDownloaded = "EQ220118_CSV.ZIP"
+        if not exists(self.out_dir):
+            mkdir(self.out_dir)
+        self.fileToBeDownloaded = "EQ" + \
+            self.date.strftime('%d%m%y') + "_CSV.ZIP"
+        # self.fileToBeDownloaded = "EQ220118_CSV.ZIP"
         self.fileToExtract = self.fileToBeDownloaded.split('_')[0] + ".CSV"
         self.csvFile = join(self.out_dir, self.fileToExtract)
         self.redis_db = redis_db
 
     def StoreData(self):
         if self.redis_db is not None:
+            self.redis_db.flushall()
             with open(self.csvFile) as f:
                 reader = csv.DictReader(f)
 
                 for row in reader:
                     d = dict({'code': row['SC_CODE'], 'open': row['OPEN'], 'high': row[
                         'HIGH'], 'low': row['LOW'], 'close': row['CLOSE']})
-                    self.redis_db.set(row['SC_NAME'].strip(), d)
 
-            print(self.redis_db.get('HDFC'))
+                    self.redis_db.hmset(row['SC_NAME'].strip(), d)
+
+                self.redis_db.save()
+            # print(self.redis_db.get('HDFC'))
 
     def GetData(self):
 
-        print("Fetching file for {0}....".format(self.todays_date))
+        print("Fetching file for {0}....".format(self.date))
         r = requests.get(
             'http://www.bseindia.com/download/BhavCopy/Equity/' + self.fileToBeDownloaded)
 

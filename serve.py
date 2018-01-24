@@ -3,48 +3,59 @@ from datetime import datetime
 import redis
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.schedulers.background import BackgroundScheduler
+from jinja2 import Environment, FileSystemLoader
 from main import Downloader
-
-data = {
-    'ABB LTD.': dict({'code': 500002, 'open': 1583, 'high': 1607.4, 'low': 1563.8, 'close': 1597.6}),
-    'AEGIS LOGIS': dict({'code': 500003, 'open': 286.15, 'high': 288.2, 'low': 283, 'close': 285})
-}
 
 scheduler = BackgroundScheduler()
 scheduler.start()
-redis_db = redis.StrictRedis()
-
-
-@scheduler.scheduled_job(trigger=CronTrigger(year='*', month='*',
-                                             day='*', week='*', hour=23, minute=19, second=0, start_date=datetime.now()))
-def updateDB():
-    print("*" * 100, "Updating")
-    print(redis_db.keys())
-    # TODO: Empty the DB here
-    dl = Downloader(out_dir="data", redis_db=redis_db)
-    if dl.GetData():
-        dl.StoreData()
-    else:
-        print("Error in updating DB")
+redis_db = redis.StrictRedis(decode_responses=True)
+env = Environment(loader=FileSystemLoader('templates'))
 
 
 class StockData(object):
 
+    @staticmethod
+    @scheduler.scheduled_job(trigger=CronTrigger(year='*', month='*',
+                                                 day='*', week='*', hour=23, minute=19, second=0, start_date=datetime.now()))
+    def updateDB():
+        print("=" * 50 + "\nUpdating\n" + "=" * 50)
+        dl = Downloader(out_dir="data", redis_db=redis_db)
+        if dl.GetData():
+            dl.StoreData()
+        else:
+            print("Error in updating DB")
+
+    def __init__(self):
+        self.updateDB()
+
     @cherrypy.expose
     def index(self):
-        return open('index.html')
+        # TODO: Get first 10 entries of redis
+        possible_keys = redis_db.keys()
+        possible_keys = possible_keys[:10]
+        pipeline = redis_db.pipeline()
+        pipeline.multi()
+        for key in possible_keys:
+            pipeline.hgetall(key)
+        ans = pipeline.execute()
+
+        tmpl = env.get_template('index.html')
+        return tmpl.render(data=dict(zip(possible_keys, ans)))
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def searchResponse(self, name):
         # TODO: Perform validation of user input
-        try:
-            # TODO: Get search results from redis_db
-            possible_keys = redis_db.keys(pattern=name)
-            return str(possible_keys)
-            # return str(data[name])
-        except KeyError:
-            return str(dict({}))
+        name = name.upper()
+        possible_keys = redis_db.keys(pattern='*' + name + '*')
 
-cherrypy.engine.subscribe('start', updateDB)
+        pipeline = redis_db.pipeline()
+        pipeline.multi()
+        for key in possible_keys:
+            pipeline.hgetall(key)
+        ans = pipeline.execute()
+
+        return dict(zip(possible_keys, ans))
+
+
 cherrypy.quickstart(StockData(), '/')
