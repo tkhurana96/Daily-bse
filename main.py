@@ -52,16 +52,6 @@ class Downloader:
                 f.write(r.content)
                 ZipFile(f).extract(self.fileToExtract, self.out_dir)
             return True
-            # if zipfile.is_zipfile(self.fileToBeDownloaded):
-            #     print("Extracting file:", self.fileToBeDownloaded)
-
-            #     with zipfile.ZipFile(self.fileToBeDownloaded, mode='r') as myzip:
-            #         info = myzip.infolist()
-            #         for each in info:
-            #             print(type(each), each)
-            #         print(dir(info))
-            # else:
-            #     print("Invalid zip file")
         else:
             print("Error in fetching file")
             return False

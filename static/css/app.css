@@ -1,3 +1,85 @@
-.navbar-brand {
+html {
+    box-sizing: border-box;
+    background: #ffc600;
+    font-family: 'helvetica neue';
+    font-size: 20px;
+    font-weight: 200;
+}
+
+.navbar {
     font-family: 'Peralta', cursive;
 }
+
+.navbar-brand {
+    font-size: xx-large !important;
+    font-family: 'Peralta', cursive;
+}
+
+body {
+    background: inherit !important;
+}
+
+.dataDiv {
+    margin: 54px auto;
+    border-radius: 5px;
+    overflow-x: hidden;
+}
+
+.dataTable {
+    font-family: 'helvetica neue';
+    font-size: large;
+    font-weight: 500;
+}
+
+thead {
+    font-family: 'Peralta', cursive;
+    font-size: large;
+    background: linear-gradient(to bottom, #FFFF09 0%, #ffc600 100%);
+    transform: perspective(100px) rotateX(3deg) translateY(2px) scale(1.001);
+}
+
+tbody tr {
+    background: linear-gradient(to bottom, #ffffff 0%, #EFEFEF 100%);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.14);
+}
+
+tr:nth-child(even) {
+    transform: perspective(100px) rotateX(3deg) translateY(2px) scale(1.001);
+    background: linear-gradient(to bottom, #ffffff 0%, #EFEFEF 100%);
+}
+
+tr:nth-child(odd) {
+    transform: perspective(100px) rotateX(-3deg) translateY(3px);
+}
+
+.loader {
+    border: 16px solid #f3f3f3;
+    border-top: #007bff;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.my_icons {
+    font-size: 100px;
+    color: #0069d9;
+}
+
+.icon-msg {
+    font-size: 30px;
+}
+
+
+/* table td {
+    border-top: none !important;
+} */

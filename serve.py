@@ -1,6 +1,7 @@
 import cherrypy
 from datetime import datetime
 import redis
+import os
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.schedulers.background import BackgroundScheduler
 from jinja2 import Environment, FileSystemLoader
@@ -58,4 +59,13 @@ class StockData(object):
         return dict(zip(possible_keys, ans))
 
 
-cherrypy.quickstart(StockData(), '/')
+config = {
+    '/': {
+        "tools.staticdir.root": os.path.abspath(os.path.dirname(__file__))
+    },
+    '/static': {
+        'tools.staticdir.on': True,
+        'tools.staticdir.dir': "static"
+    }
+}
+cherrypy.quickstart(StockData(), '/', config=config)
