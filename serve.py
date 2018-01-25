@@ -1,6 +1,7 @@
 import cherrypy
 from datetime import datetime
 import redis
+import os
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.schedulers.background import BackgroundScheduler
 from jinja2 import Environment, FileSystemLoader
@@ -8,7 +9,8 @@ from main import Downloader
 
 scheduler = BackgroundScheduler()
 scheduler.start()
-redis_db = redis.StrictRedis(decode_responses=True)
+redis_db = redis.StrictRedis().from_url(
+    os.environ.get("REDIS_URL"), decode_responses=True)
 env = Environment(loader=FileSystemLoader('templates'))
 
 
