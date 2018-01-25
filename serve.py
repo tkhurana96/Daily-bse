@@ -60,4 +60,13 @@ class StockData(object):
         return dict(zip(possible_keys, ans))
 
 
-cherrypy.quickstart(StockData(), '/')
+config = {
+    '/': {
+        "tools.staticdir.root": os.path.abspath(os.path.dirname(__file__))
+    },
+    '/static': {
+        'tools.staticdir.on': True,
+        'tools.staticdir.dir': "static"
+    }
+}
+cherrypy.quickstart(StockData(), '/', config=config)

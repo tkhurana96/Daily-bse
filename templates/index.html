@@ -22,7 +22,7 @@
             <div class="input-group col-md-4">
                 <input class="form-control rounded-0" type="search" name="name" id="searchBox" placeholder="Stock Name">
                 <span class="input-group-btn">
-                    <button class="btn btn-primary searchSubmit rounded-0" type="submit">
+                    <button id="searchSubmit" class="btn btn-primary rounded-0" type="submit">
                         <i class="material-icons">search</i>
                     </button>
                 </span>
@@ -30,33 +30,135 @@
         </div>
     </nav>
 
-    <div class="container table-responsive">
-        <table class="table table-striped table-bordered">
-            <thead class="thead-inverse ">
+    <div class="dataDiv container table-responsive">
+        <div id="loadingDiv" style="overflow-y: hidden;padding-left: 44%;padding-top: 25%;display: none;">
+            <div class="loader">
+            </div>
+        </div>
+
+        <div id="errorDiv" style="overflow-y: hidden;padding-left: 44%;padding-top: 25%;display: none;">
+            <!-- <span class="icon-msg">Error</span> -->
+            <span>
+                <i class="material-icons my_icons">error</i>
+            </span>
+        </div>
+
+        <div id="nothingFoundDiv" style="overflow-y: hidden;padding-left: 44%;padding-top: 25%;display: none;">
+            <!-- <span class="icon-msg"> No results </span> -->
+            <span>
+                <i class="material-icons my_icons">thumb_down</i>
+            </span>
+        </div>
+
+        <table class="dataTable table">
+            <thead class="thead-inverse">
                 <tr>
-                    <th>Code</th>
-                    <th>Name</th>
-                    <th>Open</th>
-                    <th>High</th>
-                    <th>Low</th>
-                    <th>Close</th>
-                <tr>
+                    <th data-field="Code">Code</th>
+                    <th data-field="Name">Name</th>
+                    <th data-field="Open">Open</th>
+                    <th data-field="High">High</th>
+                    <th data-field="Low">Low</th>
+                    <th data-field="Close">Close</th>
+                </tr>
             </thead>
-            
+
             <tbody>
                 {% for key, value in data.items() %}
-                    <tr>
-                        <td>{{value.code}}</td>
-                        <td>{{key}}</td>
-                        <td>{{value.open}}</td>
-                        <td>{{value.high}}</td>
-                        <td>{{value.low}}</td>
-                        <td>{{value.close}}</td>
-                    </tr>
+                <tr>
+                    <td>{{value.code}}</td>
+                    <td>{{key}}</td>
+                    <td>{{value.open}}</td>
+                    <td>{{value.high}}</td>
+                    <td>{{value.low}}</td>
+                    <td>{{value.close}}</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    <script>
+        function renderResult(dataObj, searchKey) {
+            // console.table(dataObj);
+            if (dataObj === null) {
+                console.log("Some error happened on server");
+                tableBody.innerHTML = "";
+                loadingDiv.style.display = "none";
+                errorDiv.style.display = "block";
+            } else {
+                if (Object.keys(dataObj).length > 0) {
+                    console.log("Some data to display");
+                    tableBody.innerHTML = "";
+                    let newHtml = "";
+                    const regex = new RegExp(searchKey, "i");
+
+                    for (let name in dataObj) {
+                        const rowHtml = dataFields.reduce((rowHtml, field) => {
+                            if (field == 'name') {
+                                return rowHtml + '<td>' + name.replace(regex,
+                                    `<span style="background: #ffc600;">${searchKey}</span>`) + '</td>';
+                            } else {
+                                return rowHtml + '<td>' + dataObj[name][field] + '</td>';
+                            }
+                        }, "");
+
+                        newHtml +=
+                            `<tr> ${rowHtml} </tr>`;
+                    }
+
+                    tableBody.innerHTML = newHtml;
+
+                    loadingDiv.style.display = "none";
+                    dataTable.style.display = "table";
+                } else {
+                    console.log("No data to display");
+                    tableBody.innerHTML = "";
+                    loadingDiv.style.display = "none";
+                    nothingFoundDiv.style.display = "block";
+                }
+            }
+        }
+
+        function search(event) {
+            const url = new URL('/searchResponse', window.location.href);
+            const searchKey = document.querySelector("#searchBox").value;
+
+            if (searchKey.length > 0) {
+                url.searchParams.append('name', searchKey);
+
+                dataTable.style.display = "none";
+                nothingFoundDiv.style.display = "none";
+                errorDiv.style.display = "none";
+                loadingDiv.style.display = "block";
+
+                fetch(url).then(function (response) {
+                    if (response.ok) {
+                        response.json().then(function (data) {
+                            renderResult(data, searchKey);
+                        });
+                    } else {
+                        throw new Error("Network response was not OK");
+                    }
+                }).catch(function (error) {
+                    console.log("This error happened:", error);
+                    renderResult(null, searchKey);
+                });
+            }
+        }
+
+        const dataTable = document.querySelector(".dataTable");
+        const tableBody = dataTable.querySelector("tbody");
+        const loadingDiv = document.querySelector("#loadingDiv");
+        const nothingFoundDiv = document.querySelector("#nothingFoundDiv");
+        const errorDiv = document.querySelector("#errorDiv");
+
+        const tableHeaders = [...document.querySelectorAll(".dataTable>thead>tr>th")];
+        const dataFields = tableHeaders.map(header => {
+            return header.dataset.field.toLowerCase();
+        });
+
+        const searchBtn = document.querySelector("#searchSubmit");
+        searchBtn.addEventListener('click', search);
+    </script>
 </body>
 
 </html>
