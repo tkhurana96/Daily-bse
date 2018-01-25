@@ -6,7 +6,7 @@ from zipfile import ZipFile
 import datetime
 import redis
 from os.path import join, exists
-from os import mkdir
+import os
 
 
 class Downloader:
@@ -15,7 +15,7 @@ class Downloader:
         self.date = datetime.date.today()
         self.out_dir = out_dir
         if not exists(self.out_dir):
-            mkdir(self.out_dir)
+            os.mkdir(self.out_dir)
         self.fileToBeDownloaded = "EQ" + \
             self.date.strftime('%d%m%y') + "_CSV.ZIP"
         # self.fileToBeDownloaded = "EQ220118_CSV.ZIP"
@@ -52,22 +52,15 @@ class Downloader:
                 f.write(r.content)
                 ZipFile(f).extract(self.fileToExtract, self.out_dir)
             return True
-            # if zipfile.is_zipfile(self.fileToBeDownloaded):
-            #     print("Extracting file:", self.fileToBeDownloaded)
-
-            #     with zipfile.ZipFile(self.fileToBeDownloaded, mode='r') as myzip:
-            #         info = myzip.infolist()
-            #         for each in info:
-            #             print(type(each), each)
-            #         print(dir(info))
-            # else:
-            #     print("Invalid zip file")
         else:
             print("Error in fetching file")
             return False
 
 if __name__ == "__main__":
-    d = Downloader(out_dir="data", redis_db=redis.StrictRedis())
+    r = redis.StrictRedis().from_url(
+        os.environ.get("REDIS_URL"), decode_responses=True)
+    d = Downloader(
+        out_dir="data", redis_db=r)
     if d.GetData():
         d.StoreData()
         print("Fetched data successfully")
