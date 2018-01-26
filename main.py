@@ -25,18 +25,24 @@ class Downloader:
 
     def StoreData(self):
         if self.redis_db is not None:
-            self.redis_db.flushall()
             with open(self.csvFile) as f:
                 reader = csv.DictReader(f)
 
-                for row in reader:
+                pipeline = self.redis_db.pipeline()
+                pipeline.multi()
+                pipeline.flushall()
+                for idx, row in enumerate(reader):
+                    name = row['SC_NAME'].strip()
+                    if idx < 10:
+                        pipeline.zadd('top10', idx, name)
+
                     d = dict({'code': row['SC_CODE'], 'open': row['OPEN'], 'high': row[
                         'HIGH'], 'low': row['LOW'], 'close': row['CLOSE']})
 
-                    self.redis_db.hmset(row['SC_NAME'].strip(), d)
+                    pipeline.hmset(name, d)
 
-                self.redis_db.save()
-            # print(self.redis_db.get('HDFC'))
+                pipeline.save()
+                pipeline.execute()
 
     def GetData(self):
 
