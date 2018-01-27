@@ -16,7 +16,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="">Today's BSE Data</a>
+            <a class="navbar-brand" href="">BSE Data</a>
 
             <div class="input-group col-md-4">
                 <input class="form-control rounded-0" type="search" name="name" id="searchBox" placeholder="Stock Name">
@@ -49,7 +49,7 @@
             </span>
         </div>
 
-        <div id="upDownBtns" class="btn-group" style="position: absolute; z-index: 10; right: 1%; bottom: 5%">
+        <!-- <div id="upDownBtns" class="btn-group" style="position: absolute; z-index: 10; right: 1%; bottom: 5%">
             <button type="button" id="btnUp" class="btn btn-primary" disabled>
                 <span>
                     <i class="material-icons">keyboard_arrow_up</i>
@@ -60,7 +60,7 @@
                     <i class="material-icons">keyboard_arrow_down</i>
                 </span>
             </button>
-        </div>
+        </div> -->
 
         <table class="dataTable table">
             <thead class="thead-inverse">
@@ -100,7 +100,6 @@
         const loadingDiv = document.querySelector("#loadingDiv");
         const nothingFoundDiv = document.querySelector("#nothingFoundDiv");
         const errorDiv = document.querySelector("#errorDiv");
-        const upDownBtns = document.querySelector("#upDownBtns");
 
         const tableHeaders = [...document.querySelectorAll(".dataTable>thead>tr>th")];
         const dataFields = tableHeaders.map(header => {
@@ -108,8 +107,9 @@
         });
 
         const searchBtn = document.querySelector("#searchSubmit");
+        /*const upDownBtns = document.querySelector("#upDownBtns");
         const upButton = document.querySelector("#btnUp");
-        const downButton = document.querySelector("#btnDown");
+        const downButton = document.querySelector("#btnDown"); */
 
         let dataToShow = null,
             dataStartIdx = null,
@@ -145,10 +145,10 @@
                 contentRows[rowNum].innerHTML = singleRowHtml(dataToShow[dataIdx]);
             }
 
-            upButton.disabled = dataStartIdx == 0 ? true : false;
+            /*upButton.disabled = dataStartIdx == 0 ? true : false;
             downButton.disabled = dataToShow.length - dataStartIdx == numVisibleRows ? true : false;
+            upDownBtns.style.display = "flex";*/
 
-            upDownBtns.style.display = "flex";
             loadingDiv.style.display = "none";
             dataTable.style.display = "table";
         }
@@ -184,7 +184,7 @@
                 dataTable.style.display = "none";
                 nothingFoundDiv.style.display = "none";
                 errorDiv.style.display = "none";
-                upDownBtns.style.display = "none";
+                // upDownBtns.style.display = "none";
                 loadingDiv.style.display = "block";
 
                 fetch(url).then(function (response) {
@@ -238,6 +238,7 @@
             }
         }
 
+        /*
         function scrollUp(event) {
             scrollContent("up");
         }
@@ -246,9 +247,39 @@
             scrollContent("down");
         }
 
-        searchBtn.addEventListener('click', search);
         upButton.addEventListener('click', scrollUp);
         downButton.addEventListener('click', scrollDown);
+        */
+
+        function shouldScroll(e) {
+            if (e.deltaY > 0) {
+                scrollContent("up");
+            } else if (e.deltaY < 0) {
+                scrollContent("down");
+            }
+        }
+
+        function debounce(func, wait = 35, immediate = true) {
+            console.log("debouncing");
+            var timeout;
+            return function () {
+                var context = this,
+                    args = arguments;
+                var later = function () {
+                    timeout = null;
+                    if (!immediate) func.apply(context, args);
+                };
+                var callNow = immediate && !timeout;
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+                if (callNow) func.apply(context, args);
+            };
+        };
+
+        searchBtn.addEventListener('click', search);
+        tableBody.addEventListener("mousewheel", debounce(shouldScroll), {
+            passive: true
+        });
     </script>
 </body>
 
