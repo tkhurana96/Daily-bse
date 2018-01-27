@@ -57,7 +57,11 @@ class StockData(object):
             pipeline.hgetall(key)
         ans = pipeline.execute()
 
-        return dict(zip(possible_keys, ans))
+        for idx, each_dict in enumerate(ans):
+            each_dict['name'] = possible_keys[idx]
+
+        return ans
+        # return dict(zip(possible_keys, ans))
 
 
 config = {

@@ -14,7 +14,6 @@
 </head>
 
 <body>
-
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="">Today's BSE Data</a>
@@ -50,6 +49,19 @@
             </span>
         </div>
 
+        <div id="upDownBtns" class="btn-group" style="position: absolute; z-index: 10; right: 1%; bottom: 5%">
+            <button type="button" id="btnUp" class="btn btn-primary" disabled>
+                <span>
+                    <i class="material-icons">keyboard_arrow_up</i>
+                </span>
+            </button>
+            <button type="button" id="btnDown" class="btn btn-primary" disabled>
+                <span>
+                    <i class="material-icons">keyboard_arrow_down</i>
+                </span>
+            </button>
+        </div>
+
         <table class="dataTable table">
             <thead class="thead-inverse">
                 <tr>
@@ -77,79 +89,18 @@
         </table>
     </div>
     <script>
-        function renderResult(dataObj, searchKey) {
-            // console.table(dataObj);
-            if (dataObj === null) {
-                console.log("Some error happened on server");
-                tableBody.innerHTML = "";
-                loadingDiv.style.display = "none";
-                errorDiv.style.display = "block";
-            } else {
-                if (Object.keys(dataObj).length > 0) {
-                    console.log("Some data to display");
-                    tableBody.innerHTML = "";
-                    let newHtml = "";
-                    const regex = new RegExp(searchKey, "i");
-
-                    for (let name in dataObj) {
-                        const rowHtml = dataFields.reduce((rowHtml, field) => {
-                            if (field == 'name') {
-                                return rowHtml + '<td>' + name.replace(regex,
-                                    `<span style="background: #ffc600;">${searchKey}</span>`) + '</td>';
-                            } else {
-                                return rowHtml + '<td>' + dataObj[name][field] + '</td>';
-                            }
-                        }, "");
-
-                        newHtml +=
-                            `<tr> ${rowHtml} </tr>`;
-                    }
-
-                    tableBody.innerHTML = newHtml;
-
-                    loadingDiv.style.display = "none";
-                    dataTable.style.display = "table";
-                } else {
-                    console.log("No data to display");
-                    tableBody.innerHTML = "";
-                    loadingDiv.style.display = "none";
-                    nothingFoundDiv.style.display = "block";
-                }
-            }
-        }
-
-        function search(event) {
-            const url = new URL('/searchResponse', window.location.href);
-            const searchKey = document.querySelector("#searchBox").value;
-
-            if (searchKey.length > 0) {
-                url.searchParams.append('name', searchKey);
-
-                dataTable.style.display = "none";
-                nothingFoundDiv.style.display = "none";
-                errorDiv.style.display = "none";
-                loadingDiv.style.display = "block";
-
-                fetch(url).then(function (response) {
-                    if (response.ok) {
-                        response.json().then(function (data) {
-                            renderResult(data, searchKey);
-                        });
-                    } else {
-                        throw new Error("Network response was not OK");
-                    }
-                }).catch(function (error) {
-                    console.log("This error happened:", error);
-                    renderResult(null, searchKey);
-                });
-            }
-        }
+        /*
+         * dataToShow will be like this: [{...}, {...}, {...}, {...}, {...}]
+         * contentRows will be like this: [tr, tr, tr, tr]
+         */
 
         const dataTable = document.querySelector(".dataTable");
         const tableBody = dataTable.querySelector("tbody");
+
         const loadingDiv = document.querySelector("#loadingDiv");
         const nothingFoundDiv = document.querySelector("#nothingFoundDiv");
         const errorDiv = document.querySelector("#errorDiv");
+        const upDownBtns = document.querySelector("#upDownBtns");
 
         const tableHeaders = [...document.querySelectorAll(".dataTable>thead>tr>th")];
         const dataFields = tableHeaders.map(header => {
@@ -157,7 +108,147 @@
         });
 
         const searchBtn = document.querySelector("#searchSubmit");
+        const upButton = document.querySelector("#btnUp");
+        const downButton = document.querySelector("#btnDown");
+
+        let dataToShow = null,
+            dataStartIdx = null,
+            dataEndIdx = null,
+            searchKey = null;
+
+        let contentRows = tableBody.querySelectorAll("tr");
+        let numVisibleRows = contentRows.length;
+
+        function singleRowHtml(rowData) {
+            const regex = new RegExp(searchKey, "i");
+            const rowHtml = dataFields.reduce((rowHtml, field) => {
+                if (field == 'name') {
+                    return rowHtml + '<td>' + rowData[field].replace(regex,
+                        `<span style="background: #ffc600;">${searchKey}</span>`) + '</td>';
+                } else {
+                    return rowHtml + '<td>' + rowData[field] + '</td>';
+                }
+            }, "");
+            return rowHtml;
+        }
+
+        function renderRows() {
+            for (let rowNum = 0; rowNum < numVisibleRows; rowNum++) {
+                const dataIdx = dataStartIdx + rowNum;
+                if (dataIdx % 2 != 0) {
+                    contentRows[rowNum].classList.remove("forceEvenClass");
+                    contentRows[rowNum].classList.add("forceOddClass");
+                } else {
+                    contentRows[rowNum].classList.remove("forceOddClass");
+                    contentRows[rowNum].classList.add("forceEvenClass");
+                }
+                contentRows[rowNum].innerHTML = singleRowHtml(dataToShow[dataIdx]);
+            }
+
+            upButton.disabled = dataStartIdx == 0 ? true : false;
+            downButton.disabled = dataToShow.length - dataStartIdx == numVisibleRows ? true : false;
+
+            upDownBtns.style.display = "flex";
+            loadingDiv.style.display = "none";
+            dataTable.style.display = "table";
+        }
+
+        function resetContentRows(newDataToShowLength) {
+            let start, end, display;
+            if (newDataToShowLength < numVisibleRows) {
+                // newDataToShowLength -> numVisibleRows - 1 : hiding
+                start = newDataToShowLength;
+                end = numVisibleRows - 1;
+                display = "none";
+                numVisibleRows = newDataToShowLength;
+            } else if (newDataToShowLength > numVisibleRows) {
+                // numVisibleRows -> min(newDataToShowLength, contentRows.length) : showing
+                start = numVisibleRows;
+                numVisibleRows = Math.min(newDataToShowLength, contentRows.length);
+                end = numVisibleRows - 1;
+                display = "table-row";
+            }
+            for (let rowNum = start; rowNum <= end; rowNum++) {
+                contentRows[rowNum].style.display = display;
+            }
+        }
+
+
+        function search(event) {
+            const url = new URL('/searchResponse', window.location.href);
+            searchKey = document.querySelector("#searchBox").value;
+
+            if (searchKey.length > 0) {
+                url.searchParams.append('name', searchKey);
+
+                dataTable.style.display = "none";
+                nothingFoundDiv.style.display = "none";
+                errorDiv.style.display = "none";
+                upDownBtns.style.display = "none";
+                loadingDiv.style.display = "block";
+
+                fetch(url).then(function (response) {
+                    if (response.ok) {
+                        response.json().then(function (data) {
+                            dataToShow = data;
+
+                            resetContentRows(dataToShow.length);
+                            dataStartIdx = 0;
+                            dataEndIdx = dataStartIdx + numVisibleRows;
+
+                            render(dataToShow.length > 0 ? "rows" : "not found");
+                        });
+                    } else {
+                        throw new Error("Network response was not OK");
+                    }
+                }).catch(function (error) {
+                    console.log("This error happened:", error);
+                    resetContentRows(0);
+                    render("error");
+                });
+            }
+        }
+
+        function render(what) {
+            if (what === "rows") {
+                renderRows();
+            } else if (what === "error" || what === "not found") {
+                dataTable.style.display = "none";
+                loadingDiv.style.display = "none";
+
+                if (what === "error") {
+                    errorDiv.style.display = "block";
+                } else if (what === "not found") {
+                    nothingFoundDiv.style.display = "block";
+                }
+            }
+        }
+
+        function scrollContent(direction, rowsPerScroll = 1) {
+            if (searchKey !== null && (dataStartIdx > 0 || dataEndIdx < dataToShow.length)) {
+
+                if (direction === "up") {
+                    dataStartIdx = Math.max(0, dataStartIdx - rowsPerScroll);
+                    dataEndIdx = dataStartIdx + numVisibleRows;
+                } else if (direction === "down") {
+                    dataEndIdx = Math.min(dataToShow.length, dataEndIdx + rowsPerScroll);
+                    dataStartIdx = dataEndIdx - numVisibleRows;
+                }
+                renderRows();
+            }
+        }
+
+        function scrollUp(event) {
+            scrollContent("up");
+        }
+
+        function scrollDown(event) {
+            scrollContent("down");
+        }
+
         searchBtn.addEventListener('click', search);
+        upButton.addEventListener('click', scrollUp);
+        downButton.addEventListener('click', scrollDown);
     </script>
 </body>
 
