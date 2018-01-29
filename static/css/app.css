@@ -39,17 +39,29 @@ thead {
 }
 
 tbody tr {
-    background: linear-gradient(to bottom, #ffffff 0%, #EFEFEF 100%);
+    /* background: linear-gradient(to bottom, #ffffff 0%, #EFEFEF 100%); */
+    background: linear-gradient(to bottom, #ffffff 0%, #dced96 100%);
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.14);
+    /* transform: perspective(100px) rotateX(3deg) translateY(2px) scale(1.001); */
 }
 
 tr:nth-child(even) {
     transform: perspective(100px) rotateX(3deg) translateY(2px) scale(1.001);
-    background: linear-gradient(to bottom, #ffffff 0%, #EFEFEF 100%);
+    /* background: linear-gradient(to bottom, #ffffff 0%, #EFEFEF 100%); */
 }
 
 tr:nth-child(odd) {
     transform: perspective(100px) rotateX(-3deg) translateY(3px);
+}
+
+.forceEvenClass {
+    transform: perspective(100px) rotateX(3deg) translateY(2px) scale(1.001) !important;
+    transition: transform 0.03s;
+}
+
+.forceOddClass {
+    transform: perspective(100px) rotateX(-3deg) translateY(3px) !important;
+    transition: transform 0.03s;
 }
 
 .loader {
@@ -78,7 +90,6 @@ tr:nth-child(odd) {
 .icon-msg {
     font-size: 30px;
 }
-
 
 /* table td {
     border-top: none !important;
