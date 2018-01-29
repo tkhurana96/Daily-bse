@@ -25,24 +25,27 @@ class Downloader:
 
     def StoreData(self):
         if self.redis_db is not None:
-            with open(self.csvFile) as f:
-                reader = csv.DictReader(f)
+            try:
+                with open(self.csvFile) as f:
+                    reader = csv.DictReader(f)
 
-                pipeline = self.redis_db.pipeline()
-                pipeline.multi()
-                pipeline.flushall()
-                for idx, row in enumerate(reader):
-                    name = row['SC_NAME'].strip()
-                    if idx < 10:
-                        pipeline.zadd('top10', idx, name)
+                    pipeline = self.redis_db.pipeline()
+                    pipeline.multi()
+                    pipeline.flushall()
+                    for idx, row in enumerate(reader):
+                        name = row['SC_NAME'].strip()
+                        if idx < 10:
+                            pipeline.zadd('top10', idx, name)
 
-                    d = dict({'code': row['SC_CODE'], 'open': row['OPEN'], 'high': row[
-                        'HIGH'], 'low': row['LOW'], 'close': row['CLOSE']})
+                        d = dict({'code': row['SC_CODE'], 'open': row['OPEN'], 'high': row[
+                            'HIGH'], 'low': row['LOW'], 'close': row['CLOSE']})
 
-                    pipeline.hmset(name, d)
+                        pipeline.hmset(name, d)
 
-                pipeline.save()
-                pipeline.execute()
+                    pipeline.save()
+                    pipeline.execute()
+            except:
+                print("Error occured in storing data")
 
     def GetData(self):
 

@@ -1,0 +1,21 @@
+language: python
+
+python:
+  - "3.6"
+  - "3.5"
+  - "3.7-dev"
+
+services:
+  - redis-server
+
+install:
+  - pip install pipenv codecov coverage
+  - pipenv install
+  - mv .env.sample .env
+
+script:
+  - pipenv run coverage run --rcfile=.coveragerc main.py
+  - pipenv run coverage report
+
+after_success:
+  - codecov
