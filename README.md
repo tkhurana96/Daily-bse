@@ -1,4 +1,5 @@
 ## Daily BSE
+[![Build Status](https://travis-ci.org/tkhurana96/Daily-bse.svg?branch=master)](https://travis-ci.org/tkhurana96/Daily-bse)
 
 This project shows the daily stats issued by BSE by fetching from this URL: http://www.bseindia.com/markets/equity/EQReports/BhavCopyDebt.aspx?expandable=3
 
