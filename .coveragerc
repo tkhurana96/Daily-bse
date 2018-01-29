@@ -1,0 +1,14 @@
+[run]
+include =
+    main.py
+omit = 
+    serve.py
+    .env
+    .coveragerc
+    .gitignore
+    .travis.yml
+    demo.gif
+    Pipfile
+    Pipfile.lock
+    Procfile
+    README.md
