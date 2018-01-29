@@ -75,14 +75,14 @@
             </thead>
 
             <tbody>
-                {% for key, value in data.items() %}
+                {% for each_result in data %}
                 <tr>
-                    <td>{{value.code}}</td>
-                    <td>{{key}}</td>
-                    <td>{{value.open}}</td>
-                    <td>{{value.high}}</td>
-                    <td>{{value.low}}</td>
-                    <td>{{value.close}}</td>
+                    <td>{{each_result.code}}</td>
+                    <td>{{each_result.name}}</td>
+                    <td>{{each_result.open}}</td>
+                    <td>{{each_result.high}}</td>
+                    <td>{{each_result.low}}</td>
+                    <td>{{each_result.close}}</td>
                 </tr>
                 {% endfor %}
             </tbody>

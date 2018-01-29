@@ -32,17 +32,19 @@ class StockData(object):
 
     @cherrypy.expose
     def index(self):
-        # TODO: Get first 10 entries of redis
-        possible_keys = redis_db.keys()
-        possible_keys = possible_keys[:10]
+
+        possible_keys = redis_db.zrange("top10", 0, -1)
         pipeline = redis_db.pipeline()
         pipeline.multi()
         for key in possible_keys:
             pipeline.hgetall(key)
         ans = pipeline.execute()
 
+        for idx, each_dict in enumerate(ans):
+            each_dict['name'] = possible_keys[idx]
+
         tmpl = env.get_template('index.html')
-        return tmpl.render(data=dict(zip(possible_keys, ans)))
+        return tmpl.render(data=ans)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
