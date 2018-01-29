@@ -11,7 +11,7 @@ scheduler = BackgroundScheduler()
 scheduler.start()
 redis_db = redis.StrictRedis().from_url(
     os.environ.get("REDIS_URL"), decode_responses=True)
-env = Environment(loader=FileSystemLoader('templates'))
+env = Environment(autoescape=True, loader=FileSystemLoader('templates'))
 
 
 class StockData(object):
@@ -30,6 +30,7 @@ class StockData(object):
     def __init__(self):
         self.updateDB()
 
+    @classmethod
     @cherrypy.expose
     def index(self):
 
@@ -46,6 +47,7 @@ class StockData(object):
         tmpl = env.get_template('index.html')
         return tmpl.render(data=ans)
 
+    @classmethod
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def searchResponse(self, name):
