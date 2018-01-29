@@ -13,7 +13,7 @@ The project uses Cherrypy, the python web framework to serve files and redis to 
   - clone the project
   - `cd` into cloned directory
   - use `pipenv install` to install deps
-  - rename .env.sample to .env
+  - rename `.env.sample` to `.env` using: `mv .env.sample .env`
   - use `pipenv shell` to activate the virtual env
   - run `python serve.py`
   - goto `localhost:8080` in browser
